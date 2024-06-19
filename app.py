@@ -10,7 +10,7 @@ from gradio_rerun import Rerun  # type: ignore
 from ocr import detect_and_log_layout  # type: ignore
 
 
-@rr.thread_local_stream("OCR")
+@rr.thread_local_stream("PaddleOCR")
 def log_to_rr(img_path: Path):
     print(img_path)
     stream = rr.binary_stream()
@@ -27,7 +27,13 @@ def log_to_rr(img_path: Path):
 
     yield stream.read()
 
+DESCRIPTION = """
+This space demonstrates the ability to visualize and verify the document layout analysis and text detection using [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR).
+The [PP-Structure](https://github.com/PaddlePaddle/PaddleOCR/tree/main/ppstructure) used for this task, which is an intelligent document analysis system developed by the PaddleOCR team, which aims to help developers better complete tasks related to document understanding such as layout analysis and table recognition.
+"""
+
 with gr.Blocks() as demo:
+    gr.Markdown(DESCRIPTION)
     with gr.Row():
         with gr.Column(scale=1):
             with gr.Row():
