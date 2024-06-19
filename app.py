@@ -10,7 +10,7 @@ from gradio_rerun import Rerun  # type: ignore
 from ocr import detect_and_log_layout  # type: ignore
 
 
-@rr.thread_local_stream("PaddleOCR")
+@rr.thread_local_stream("OCR")
 def log_to_rr(img_path: Path):
     print(img_path)
     stream = rr.binary_stream()
@@ -26,7 +26,6 @@ def log_to_rr(img_path: Path):
     detect_and_log_layout(img_path)
 
     yield stream.read()
-
 
 with gr.Blocks() as demo:
     with gr.Row():
