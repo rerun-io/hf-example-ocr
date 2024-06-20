@@ -1,12 +1,12 @@
 ---
-title: OCR
+title: PaddleOCR
 emoji: 🔥
-colorFrom: green
-colorTo: blue
-sdk: gradio
-sdk_version: 4.36.1
-app_file: app.py
+colorFrom: yellow
+colorTo: yellow
+sdk: docker
+app_port: 7860
 pinned: false
+license: mit
 ---
 
 ## Huggingface space for the [OCR example](https://www.github.com/rerun-io/rerun/tree/main/examples/python/ocr)
