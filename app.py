@@ -86,7 +86,6 @@ def log_to_rr(file_path: Path, start_page: int = 1, end_page: int = -1):
     rr.log("progress",rr.TextDocument("Done!"))
     yield stream.read()
     done.put(())
-    handle.join()
     print("done")
 
 DESCRIPTION = """
