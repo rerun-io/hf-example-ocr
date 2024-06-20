@@ -374,21 +374,23 @@ def generate_blueprint(
 
 def detect_and_log_layouts(log_queue: SimpleQueue[Any], file_path: str, start_page: int = 1, end_page: int | None = -1) -> None:
     if end_page == -1:
-        end_page = start_page + PAGE_LIMIT
+        end_page = start_page + PAGE_LIMIT-1
     if end_page < start_page:
         end_page = start_page
+    print(start_page, end_page)
 
     images: list[npt.NDArray[np.uint8]] = []
     if file_path.endswith(".pdf"):
         # convert pdf to images
         images.extend(np.array(img, dtype=np.uint8) for img in pdf2image.convert_from_path(file_path, first_page=start_page, last_page=end_page))
+        print(len(images))
         if len(images) > PAGE_LIMIT:
             log_queue.put([
                 "log",
                 "progress",
                 [rr.TextDocument(f"Too many pages requsted: {len(images)} requested but the limit is {PAGE_LIMIT}")],
             ])
-        return
+            return
     else:
         # read image
         img = cv2.imread(file_path)
