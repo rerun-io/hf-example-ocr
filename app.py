@@ -64,8 +64,9 @@ def log_to_rr(file_path: Path):
     print("done")
 
 DESCRIPTION = """
+## PaddleOCR with [Rerun](https://rerun.io/) for visualization
 This space demonstrates the ability to visualize and verify the document layout analysis and text detection using [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR).
-The [PP-Structure](https://github.com/PaddlePaddle/PaddleOCR/tree/main/ppstructure) used for this task, which is an intelligent document analysis system developed by the PaddleOCR team, which aims to help developers better complete tasks related to document understanding such as layout analysis and table recognition.
+The [PP-Structure](https://github.com/PaddlePaddle/PaddleOCR/tree/main/ppstructure) used for this task, is an intelligent document analysis system developed by the PaddleOCR team, aims to help developers better complete tasks related to document understanding such as layout analysis and table recognition.
 """
 
 with gr.Blocks() as demo:
