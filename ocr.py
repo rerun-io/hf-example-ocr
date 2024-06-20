@@ -25,6 +25,8 @@ DATASET_DIR: Final = EXAMPLE_DIR / "dataset"
 
 SAMPLE_IMAGE_URLs = ["https://storage.googleapis.com/rerun-example-datasets/ocr/paper.png"]
 
+PAGE_LIMIT = 10
+
 LayoutStructure: TypeAlias = tuple[
     list[str], list[str], list[rrb.Spatial2DView], list[rrb.Spatial2DView], list[rrb.Spatial2DView]
 ]
@@ -352,7 +354,11 @@ def generate_blueprint(
                         contents=[f"{page_path}/Image/**"] + detections_paths,
                     ),
                     rrb.Spatial2DView(name="Detections", contents=[f"{page_path}/Image/**"]),
-                    rrb.TextDocumentView(name="Recovery", contents=f"{page_path}/Recovery"),
+                    rrb.Vertical(
+                        rrb.TextDocumentView(name="Progress", contents=["progress/**"]),
+                        rrb.TextDocumentView(name="Recovery", contents=f"{page_path}/Recovery"),
+                        row_shares=[1, 4]
+                    )
                 ),
                 rrb.Horizontal(*section_tabs),
                 name=page_path,
@@ -366,11 +372,22 @@ def generate_blueprint(
     )
 
 
-def detect_and_log_layouts(log_queue: SimpleQueue[Any], file_path: str) -> None:
+def detect_and_log_layouts(log_queue: SimpleQueue[Any], file_path: str, start_page: int = 1, end_page: int | None = -1) -> None:
+    if end_page == -1:
+        end_page = start_page + PAGE_LIMIT
+    if end_page < start_page:
+        end_page = start_page
+
     images: list[npt.NDArray[np.uint8]] = []
     if file_path.endswith(".pdf"):
         # convert pdf to images
-        images.extend(np.array(img, dtype=np.uint8) for img in pdf2image.convert_from_path(file_path))
+        images.extend(np.array(img, dtype=np.uint8) for img in pdf2image.convert_from_path(file_path, first_page=start_page, last_page=end_page))
+        if len(images) > PAGE_LIMIT:
+            log_queue.put([
+                "log",
+                "error",
+                [rr.TextLog(f"Too many pages requsted: {len(images)} requested but the limit is {PAGE_LIMIT}")],
+            ])
     else:
         # read image
         img = cv2.imread(file_path)
@@ -379,7 +396,7 @@ def detect_and_log_layouts(log_queue: SimpleQueue[Any], file_path: str) -> None:
 
     # Extracte the layout from each image
     layouts: list[Layout] = []
-    page_paths = [f"page_{i + 1}" for i in range(len(images))]
+    page_paths = [f"page_{i + start_page}" for i in range(len(images))]
     processed_layouts: list[LayoutStructure] = []
     for i, (image, page_path) in enumerate(zip(images, page_paths)):
         layouts.append(detect_and_log_layout(log_queue, image, page_path))
