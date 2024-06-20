@@ -385,9 +385,10 @@ def detect_and_log_layouts(log_queue: SimpleQueue[Any], file_path: str, start_pa
         if len(images) > PAGE_LIMIT:
             log_queue.put([
                 "log",
-                "error",
-                [rr.TextLog(f"Too many pages requsted: {len(images)} requested but the limit is {PAGE_LIMIT}")],
+                "progress",
+                [rr.TextDocument(f"Too many pages requsted: {len(images)} requested but the limit is {PAGE_LIMIT}")],
             ])
+        return
     else:
         # read image
         img = cv2.imread(file_path)
