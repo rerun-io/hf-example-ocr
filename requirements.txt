@@ -2,4 +2,12 @@ rerun-sdk>=0.16.0,<0.17.0
 spaces
 gradio
 gradio_rerun
-git+https://github.com/rerun-io/rerun.git@c5f817686c6a1b8723ddeee25a9aed0ff4fa1e92#egg=ocr&subdirectory=examples/python/ocr
+fastapi
+pdf2image
+opencv-python
+paddleclas
+paddleocr
+paddlepaddle
+pandas
+setuptools
+tabulate

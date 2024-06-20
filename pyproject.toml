@@ -1,5 +1,3 @@
-# Copied from https://github.com/rerun-io/rerun_template
-
 [tool.ruff]
 # https://beta.ruff.rs/docs/configuration/
 
