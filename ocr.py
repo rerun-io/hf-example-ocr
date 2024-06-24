@@ -119,10 +119,11 @@ Layout Class:
 
 
 class Layout:
-    def __init__(self, show_unknown: bool = False):
+    def __init__(self, page_number: int, show_unknown: bool = False):
         self.counts = {layout_type: 0 for layout_type in LayoutType}
         self.records: dict[LayoutType, Any] = {layout_type: [] for layout_type in LayoutType}
         self.recovery = """"""
+        self.page_number = page_number
         self.show_unknown = show_unknown
 
     def add(
@@ -145,7 +146,7 @@ class Layout:
                 "table": table,
             })
             if layout_type != LayoutType.UNKNOWN or self.show_unknown:  # Discards the unknown layout types detections
-                path = f"recording://Image/{layout_type.type.title()}/{name.title()}"
+                path = f"recording://page_{self.page_number}/Image/{layout_type.type.title()}/{name.title()}"
                 self.recovery += f"\n\n## [{name.title()}]({path})\n\n"  # Log Type as Heading
                 # Enhancement - Logged image for Figure type TODO(#6517)
                 if layout_type == LayoutType.TABLE:
@@ -153,7 +154,7 @@ class Layout:
                         self.recovery += table  # Log details (table)
                 elif detections:
                     for index, detection in enumerate(detections):
-                        path_text = f"recording://Image/{layout_type.type.title()}/{name.title()}/Detections/{index}"
+                        path_text = f"recording://page_{self.page_number}/Image/{layout_type.type.title()}/{name.title()}/Detections/{index}"
                         self.recovery += f' [{detection["text"]}]({path_text})'  # Log details (text)
         else:
             logging.warning(f"Invalid layout type detected: {layout_type}")
@@ -221,13 +222,14 @@ class Layout:
             return f"Error processing the table: {str(e)}"
 
 
-def process_layout_records(log_queue: SimpleQueue[Any], layout: Layout, page_path: str) -> LayoutStructure:
+def process_layout_records(log_queue: SimpleQueue[Any], layout: Layout) -> LayoutStructure:
     paths, detections_paths = [], []
     zoom_paths: list[rrb.Spatial2DView] = []
     zoom_paths_figures: list[rrb.Spatial2DView] = []
     zoom_paths_tables: list[rrb.Spatial2DView] = []
     zoom_paths_texts: list[rrb.Spatial2DView] = []
 
+    page_path = f'page_{layout.page_number}'
     for layout_type in LayoutType:
         for record in layout.records[layout_type]:
             record_name = record["name"].title()
@@ -327,11 +329,11 @@ def update_zoom_paths(
 
 def generate_blueprint(
     layouts: list[Layout],
-    page_paths: list[str],
     processed_layouts: list[LayoutStructure],
 ) -> rrb.Blueprint:
     page_tabs = []
-    for layout, (page_path, processed_layout) in zip(layouts, zip(page_paths, processed_layouts)):
+    for layout, processed_layout in zip(layouts, processed_layouts):
+        page_path = f'page_{layout.page_number}'
         paths, detections_paths, zoom_paths_figures, zoom_paths_tables, zoom_paths_texts = processed_layout
 
         section_tabs = []
@@ -399,28 +401,28 @@ def detect_and_log_layouts(log_queue: SimpleQueue[Any], file_path: str, start_pa
 
     # Extracte the layout from each image
     layouts: list[Layout] = []
-    page_paths = [f"page_{i + start_page}" for i in range(len(images))]
+    page_numbers = [i + start_page for i in range(len(images))]
     processed_layouts: list[LayoutStructure] = []
-    for i, (image, page_path) in enumerate(zip(images, page_paths)):
-        layouts.append(detect_and_log_layout(log_queue, image, page_path))
+    for i, (image, page_number) in enumerate(zip(images, page_numbers)):
+        layouts.append(detect_and_log_layout(log_queue, image, page_number))
 
         # Generate and send a blueprint based on the detected layouts
         processed_layouts.append(
             process_layout_records(
                 log_queue,
                 layouts[-1],
-                page_path,
             )
         )
         logging.info("Sending blueprint...")
-        blueprint = generate_blueprint(layouts, page_paths, processed_layouts)
+        blueprint = generate_blueprint(layouts, processed_layouts)
         log_queue.put(["blueprint", blueprint])
         logging.info("Blueprint sent...")
 
 
-def detect_and_log_layout(log_queue: SimpleQueue, coloured_image: npt.NDArray[np.uint8], page_path: str = "") -> Layout:
+def detect_and_log_layout(log_queue: SimpleQueue, coloured_image: npt.NDArray[np.uint8], page_number: int) -> Layout:
     # Layout Object - This will contain the detected layouts and their detections
-    layout = Layout()
+    layout = Layout(page_number)
+    page_path = f'page_{page_number}'
 
     # Log Image and add Annotation Context
     log_queue.put([
